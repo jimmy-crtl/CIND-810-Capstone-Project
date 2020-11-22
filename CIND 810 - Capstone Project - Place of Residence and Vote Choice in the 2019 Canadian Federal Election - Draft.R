@@ -19,7 +19,7 @@ library(labelled)
 # request 2019 CES online survey
 get_ces("ces2019_web")
 # convert dataframe values to factor type
-ces2019_web <- to_factor(ces2019_web)
+ces2019_web <- as_factor(ces2019_web)
 # check column heads for dataframe
 head(ces2019_web)
 
@@ -41,7 +41,7 @@ new.ces2019_web <- data.frame(
   "Employment" = ces2019_web$cps19_employment,
   "Religion's Importance" = ces2019_web$cps19_rel_imp,
   "Religion" = ces2019_web$cps19_religion,
-  "Vote Choice" = ces2019_web$cps19_votechoice,
+  "Vote Choice" = ces2019_web$cps19_votechoice, #So this variable needs to be changed
   "Place of Residence" = ces2019_web$pes19_rural_urban,
   "Left/Right Belief Scale, Self" = ces2019_web$pes19_lr_self_1,
   "Family Values" = ces2019_web$pes19_famvalues,
@@ -66,13 +66,16 @@ new.ces2019_web <- data.frame(
   "Trust in Others" = ces2019_web$pes19_trust,
   "Newer lifestyles" = ces2019_web$pes19_newerlife,
   "Is income inequality a problem in Canada?" = ces2019_web$pes19_inequal,
-  "Province or territory currently living in" = ces2019_web$pes19_province,
   "Does not own property, stocks, or bonds" = ces2019_web$cps19_property_5,
   "Do you have any savings" = ces2019_web$cps19_property_4
 )
 
+
 # Step 4: Cleaning the variables of interest in your new data.frame.
 # Remember, first we need to find missing values. To do that, we use the function is.na().
+#### DISCLAIMER #### The number of NAs in these variables from ces2019_web can be assumed to be the same
+#### number of NAs of the same variables in the new.ces2019_web data.frame
+
 # Let's see if we can count the number of Missing values in cps19_education. Summarize and print. 
 sum(is.na(ces2019_web$cps19_education))
 # this approach worked. We can move forward knowing there are no missing values in this variable.
@@ -87,17 +90,24 @@ sum(is.na(ces2019_web$cps19_employment))
 # The next value is cps19_rel_imp
 sum(is.na(ces2019_web$cps19_rel_imp))
 # 9834 NA values were recorded. We will want those removed from out analysis.
-# To do this, we will need to create a new variable that has been cleaned of NA values.
-# We want to use cps19_rel_imp_cleaned, but we will do this in our NEW data.frame, so as not to 
+# To do this, we will need to create a new variable that has been Processed of NA values.
+# We want to use cps19_rel_imp_Processed, but we will do this in our NEW data.frame, so as not to 
 # affect the original dataset. 
 
 # The next variable is cps19_religion
 sum(is.na(ces2019_web$cps19_religion))
 # 0 NA values observed
 
-# The next variable is cps19_votechoice
+# The next variable is cps19_votechoice - Riyad Nov 12, probably take them out.
+# work on them later on. 
+
 sum(is.na(ces2019_web$cps19_votechoice))
 # 6258 NA values observed
+# This variable needs to be changed, because its label is "which party do you THINK you will vote for"
+# It is not "who did you vote for", it is the cps variable
+# This is the variable you should be using instead
+sum(is.na(ces2019_web$pes19_votechoice2019))
+# 29215 NAs observed. 
 
 # The next variable is pes19_rural_urban
 sum(is.na(ces2019_web$pes19_rural_urban))
@@ -209,187 +219,368 @@ sum(is.na(ces2019_web$pes19_inequal))
 
 # Great work! You have identified the variables with NAs you are going to put into your new data.frame. 
 # The next step is to put them into your data.frame. From there, you will go on to remove the NA values.
+# November 14, 2020
+# You can have these variables cleaned, have their NAs replaced, without having to create new variables or a new data.frame!
+# this would be much easier for you. The first step in this direction would be to do a test and confirm this works.
+
+#To replace NAs with the mode, for factor variables, we want to use the following equation
+########################################
+# To Recap
+# This is how you can replace NAs for numeric variables.
+sum(is.na(new.ces2019_web$Feminists))
+new.ces2019_web$Feminists[which(is.na(new.ces2019_web$Feminists))] <- median(new.ces2019_web$Feminists, na.rm = TRUE)
+# Success!
+
+#This is how you rpelace NAs for categorical variables
+Rel.Imp.mx = table(new.ces2019_web$Religion.s.Importance) 
+Rel.Imp.mx 
+names(Rel.Imp.mx) ### 
+Rel.Imp.mx[Rel.Imp.mx==max(Rel.Imp.mx)] ### Display the max values which is the mode
+# Check for NAs
+summary(is.na(new.ces2019_web$Religion.s.Importance))
+#replace NAs with Mode
+new.ces2019_web$Religion.s.Importance[is.na(new.ces2019_web$Religion.s.Importance)] <- "Somewhat important"
+# confirm NAs have been replaces by checking again for NA values
+summary(is.na(new.ces2019_web$Religion.s.Importance))
+
+
+# The following variables need to be cleaned. A new data.frame is NOT NECESSARY.
+
 # Question 1
-#Vote Choice
-Cleaned.Vote.Choice <- na.omit(new.ces2019_web$Vote.Choice)
-# Place of Residence
-Cleaned.Place.of.Residence <- na.omit(new.ces2019_web$Place.of.Residence)
+#Vote Choice - Categorical
+
+pes.vote.choice.mx = table(ces2019_web$cps19_votechoice) ### Get mtcars$mpg distribution
+names(pes.vote.choice.mx) ### Display the names, which are the original values of religious importance
+pes.vote.choice.mx[pes.vote.choice.mx==max(pes.vote.choice.mx)] ### Display the max values which is the mode
+summary(is.na(ces2019_web$cps19_votechoice))
+summary(is.na(ces2019_web$cps19_votechoice)) # this variable has more data... despite it being the Post-election Study.
+# Here you are again wondering if this is the right variable to use... Didn't Riyad prefer the larger variable from the cps??
+# Yes he did, but you issue is that it wasn't as accurate as the current one you're using. Maybe you need to compare the two.
+fct_count(ces2019_web$cps19_votechoice)
+# The thing is, the totals look pretty even across the two. Given that fact, I am making the executive decision to use the 
+# cps19 varaible instead, as I believe it will be more accurate. You could always compare 
+ces2019_web$cps19_votechoice[is.na(ces2019_web$cps19_votechoice)] <- "Liberal Party"
+# confirm NAs have been replaces by checking again for NA values
+summary(is.na(ces2019_web$cps19_votechoice))
+# The thing is, the totals look pretty even across the two 
+
+
+# Place of Residence - Categorical
+
+Residence.mx = table(new.ces2019_web$Place.of.Residence) ### Get mtcars$mpg distribution
+Residence.mx ### Display religious importance values distribution. Values are the frequencies of original values
+names(Residence.mx) ### Display the names, which are the original values of religious importance
+Residence.mx[Residence.mx==max(Residence.mx)] ### Display the max values which is the mode
+summary(is.na(new.ces2019_web$Place.of.Residence))
+new.ces2019_web$Place.of.Residence[is.na(new.ces2019_web$Place.of.Residence)] <- "A large town or city (more than 50K people)"
+# confirm NAs have been replaces by checking again for NA values
+summary(is.na(new.ces2019_web$Place.of.Residence))
+
 
 # Question 2
-# Education
-Cleaned.Education <- na.omit(new.ces2019_web$Education)
-#Employment
-Cleaned.Employment <- na.omit(new.ces2019_web$Employment)
-# Religion
-Cleaned.Religion <- na.omit(new.ces2019_web$Religion)
-# Age
-Cleaned.Age <- na.omit(new.ces2019_web$Age)
-# The Ownership questions ought to be collapsed together into one variable
-# Owns.a.Residence
-Cleaned.Owns.a.Residence <- na.omit(new.ces2019_web$Owns.a.Residence)
-# Owns.a.business..a.piece.of.property..a.farm.or.livestock
-Cleaned.Owns.a.business..a.piece.of.property..a.farm.or.livestock <- na.omit(new.ces2019_web$Owns.a.business..a.piece.of.property..a.farm.or.livestock)
-# Owns.stock.or.bonds
-Cleaned.Owns.stock.or.bonds <- na.omit(new.ces2019_web$Owns.stock.or.bonds)
-Cleaned.Owns.Savings <- na.omit(new.ces2019_web$do.you.have.any.savings)
-Cleaned.Does.Not.Own.Property.Stocks.Bonds.Savings <- na.omit(new.ces2019_web$Does.Not.Own.Property..Stocks..Or.Bonds)
+# Education - Categorical
+Education.mx = table(new.ces2019_web$Education) ### Get mtcars$mpg distribution
+Education.mx ### Display religious importance values distribution. Values are the frequencies of original values
+names(Education.mx) ### Display the names, which are the original values of religious importance
+Education.mx[Education.mx==max(Education.mx)] ### Display the max values which is the mode
+summary(is.na(new.ces2019_web$Education))
+new.ces2019_web$Education[is.na(new.ces2019_web$Education)] <- "Bachelor's degree"
+# confirm NAs have been replaces by checking again for NA values
+summary(is.na(new.ces2019_web$Education))
+
+#Employment - Categorical
+# No NAs
+
+# Religion - Categorical
+# No NAs
+# Age ... numeric?
+Processed.Age <- na.omit(new.ces2019_web$Age)
+sum(is.na(new.ces2019_web$Age))
+
+# The Ownership questions were recoded using fct_explicit_na(), as it replaces NA with a new Factor level.
+# Make sure your variables are converted to factors
+# Owns.a.Residence - Logical - you did this WRONG
+new.ces2019_web$Owns.a.Residence <- factor(new.ces2019_web$Owns.a.Residence)
+summary(is.na(new.ces2019_web$Owns.a.Residence))
+new.ces2019_web$Owns.a.Residence <- fct_explicit_na(new.ces2019_web$Owns.a.Residence, na_level = "Does not own a residence")
+# confirm NAs have been replaces by checking again for NA values
+summary(is.na(new.ces2019_web$Owns.a.Residence))
+fct_count(new.ces2019_web$Owns.a.Residence)
+
+# Owns.a.business..a.piece.of.property..a.farm.or.livestock - Categorical - convert to factor
+new.ces2019_web$Owns.a.business..a.piece.of.property..a.farm.or.livestock <- factor(new.ces2019_web$Owns.a.business..a.piece.of.property..a.farm.or.livestock)
+# Check for NAs
+summary(is.na(new.ces2019_web$Owns.a.business..a.piece.of.property..a.farm.or.livestock))
+#replace NAs with Mode
+new.ces2019_web$Owns.a.business..a.piece.of.property..a.farm.or.livestock <- fct_explicit_na(new.ces2019_web$Owns.a.business..a.piece.of.property..a.farm.or.livestoc, na_level = "Does not own a business, a piece of property, a farm or livestock")
+# confirm NAs have been replaces by checking again for NA values
+summary(is.na(new.ces2019_web$Owns.a.business..a.piece.of.property..a.farm.or.livestock))
+fct_count(new.ces2019_web$Owns.a.business..a.piece.of.property..a.farm.or.livestock)
+
+# Owns.stock.or.bonds - Categorical- convert to factor
+new.ces2019_web$Owns.stock.or.bonds <- factor(new.ces2019_web$Owns.stock.or.bonds) 
+# Check for NAs
+summary(is.na(new.ces2019_web$Owns.stock.or.bonds))
+#replace NAs with Mode
+new.ces2019_web$Owns.stock.or.bonds <- fct_explicit_na(new.ces2019_web$Owns.stock.or.bonds, na_level = "Does not own stocks or bonds")
+# confirm NAs have been replaces by checking again for NA values
+summary(is.na(new.ces2019_web$Owns.stock.or.bonds))
+fct_count(new.ces2019_web$Owns.stock.or.bonds)
+
+# Do you have any savings
+new.ces2019_web$Do.you.have.any.savings <- factor(new.ces2019_web$Do.you.have.any.savings)
+summary(new.ces2019_web$Do.you.have.any.savings)
+new.ces2019_web$Do.you.have.any.savings <- fct_explicit_na(new.ces2019_web$Do.you.have.any.savings, na_level = "Does not have any savings")
+fct_count(new.ces2019_web$Do.you.have.any.savings)
 
 # Question 3
-# Religion's Importance
-Cleaned.Religion.s.Importance <- na.omit(new.ces2019_web$Religion.s.Importance)
-# Family.Values
-Cleaned.Family.Values <- na.omit(new.ces2019_web$Family.Values)
-# Women.s.Place.in.the.Home
-Cleaned.Women.s.Place.in.the.Home <- na.omit(new.ces2019_web$Women.s.Place.in.the.Home)
+# Religion's Importance - Categorical
+# Completed in the example above
+# Family.Values - Categorical
+Family.Values.mx = table(new.ces2019_web$Family.Values) ### Get mtcars$mpg distribution
+Family.Values.mx ### Display religious importance values distribution. Values are the frequencies of original values
+names(Family.Values.mx) ### Display the names, which are the original values of religious importance
+Family.Values.mx[Family.Values.mx==max(Family.Values.mx)] ### Display the max values which is the mode
+summary(is.na(new.ces2019_web$Family.Values))
+new.ces2019_web$Family.Values[is.na(new.ces2019_web$Family.Values)] <- "Somewhat agree"
+# confirm NAs have been replaces by checking again for NA values
+summary(is.na(new.ces2019_web$Family.Values))
+
+# Women.s.Place.in.the.Home - Categorical
+Women.s.Place.in.the.Home.mx = table(new.ces2019_web$Women.s.Place.in.the.Home) ### Get mtcars$mpg distribution
+Women.s.Place.in.the.Home.mx ### Display religious importance values distribution. Values are the frequencies of original values
+names(Women.s.Place.in.the.Home.mx) ### Display the names, which are the original values of religious importance
+Women.s.Place.in.the.Home.mx[Women.s.Place.in.the.Home.mx==max(Women.s.Place.in.the.Home.mx)] ### Display the max values which is the mode
+summary(is.na(new.ces2019_web$Women.s.Place.in.the.Home))
+new.ces2019_web$Women.s.Place.in.the.Home[is.na(new.ces2019_web$Women.s.Place.in.the.Home)] <- "Strongly disagree"
+# confirm NAs have been replaces by checking again for NA values
+sum(is.na(new.ces2019_web$Women.s.Place.in.the.Home))
+
+
 # Racial.Minorities - Numeric, not categorical
-Cleaned.Racial.Minorities <- na.omit(new.ces2019_web$Racial.Minorities)
+sum(is.na(new.ces2019_web$Racial.Minorities))
+new.ces2019_web$Racial.Minorities[which(is.na(new.ces2019_web$Racial.Minorities))] <- median(new.ces2019_web$Racial.Minorities, na.rm = TRUE)
+sum(is.na(new.ces2019_web$Racial.Minorities))
+
+
 # Immigrants - numeric 
-Cleaned.Immigrants <- na.omit(new.ces2019_web$Immigrants)
+sum(is.na(new.ces2019_web$Immigrants))
+new.ces2019_web$Immigrants[which(is.na(new.ces2019_web$Immigrants))] <- median(new.ces2019_web$Immigrants, na.rm = TRUE)
+sum(is.na(new.ces2019_web$Immigrants))
+
+
 # Feminists - Numeric
-Cleaned.Feminists <- na.omit(new.ces2019_web$Feminists)
+sum(is.na(new.ces2019_web$Immigrants))
+new.ces2019_web$Immigrants[which(is.na(new.ces2019_web$Immigrants))] <- median(new.ces2019_web$Immigrants, na.rm = TRUE)
+sum(is.na(new.ces2019_web$Immigrants))
+
 # Politicians.in.General - Numeric
-Cleaned.Politicians.in.General <- na.omit(new.ces2019_web$Politicians.in.General)
+sum(is.na(new.ces2019_web$Politicians.in.General))
+new.ces2019_web$Politicians.in.General[which(is.na(new.ces2019_web$Politicians.in.General))] <- median(new.ces2019_web$Politicians.in.General, na.rm = TRUE)
+sum(is.na(new.ces2019_web$Politicians.in.General))
+
 # Aboriginal.Peoples - numeric
-Cleaned.Aboriginal.Peoples <- na.omit(new.ces2019_web$Aboriginal.Peoples)
+sum(is.na(new.ces2019_web$Aboriginal.Peoples))
+new.ces2019_web$Aboriginal.Peoples[which(is.na(new.ces2019_web$Aboriginal.Peoples))] <- median(new.ces2019_web$Aboriginal.Peoples, na.rm = TRUE)
+sum(is.na(new.ces2019_web$Aboriginal.Peoples))
+
 # Gays.and.Lesbians - Numeric
-Cleaned.Gays.and.Lesbians <- na.omit(new.ces2019_web$Gays.and.Lesbians)
-# Muslims.living.in.Canada
-Cleaned.Muslims.living.in.Canada <- na.omit(new.ces2019_web$Muslims.living.in.Canada)
-# Politicians.in.General.1 
-Cleaned.Politicians.in.General.1 <- na.omit(new.ces2019_web$Politicians.in.General.1)
-# Times.Volunteering.for.a.Group.or.Organization
-Cleaned.Times.Volunteering.for.a.Group.or.Organization <- na.omit(new.ces2019_web$Times.Volunteering.for.a.Group.or.Organization)
+sum(is.na(new.ces2019_web$Gays.and.Lesbians))
+new.ces2019_web$Gays.and.Lesbians[which(is.na(new.ces2019_web$Gays.and.Lesbians))] <- median(new.ces2019_web$Gays.and.Lesbians, na.rm = TRUE)
+sum(is.na(new.ces2019_web$Gays.and.Lesbians))
+
+# Muslims.living.in.Canada - Numeric
+sum(is.na(new.ces2019_web$Muslims.living.in.Canada))
+new.ces2019_web$Muslims.living.in.Canada[which(is.na(new.ces2019_web$Muslims.living.in.Canada))] <- median(new.ces2019_web$Muslims.living.in.Canada, na.rm = TRUE)
+sum(is.na(new.ces2019_web$Muslims.living.in.Canada))
+
+# Politicians.in.General.1 - Numeric
+sum(is.na(new.ces2019_web$Politicians.in.General.1))
+new.ces2019_web$Politicians.in.General.1[which(is.na(new.ces2019_web$Politicians.in.General.1))] <- median(new.ces2019_web$Politicians.in.General.1, na.rm = TRUE)
+sum(is.na(new.ces2019_web$Politicians.in.General.1))
+
+# Times.Volunteering.for.a.Group.or.Organization - Categorical
+# No NAs
+
 
 # Importance.of.Voting - Numeric 
-Cleaned.Importance.of.Voting <- na.omit(new.ces2019_web$Importance.of.Voting)
-# Nativism...Immigration
-Cleaned.Nativism...Immigration <- na.omit(new.ces2019_web$Nativism...Immigration)
-# Do.you.work.in.the.public..private..or.not.for.profit.sector.
-Cleaned.Do.you.work.in.the.public..private..or.not.for.profit.sector. <- na.omit(new.ces2019_web$Do.you.work.in.the.public..private..or.not.for.profit.sector.)
-# Trust.in.Others
-Cleaned.Trust.in.Others <- na.omit(new.ces2019_web$Trust.in.Others)
-# Newer.lifestyles
-Cleaned.Newer.lifestyles <- na.omit(new.ces2019_web$Newer.lifestyles)
-# Is.income.inequality.a.problem.in.Canada.
-Cleaned.Is.income.inequality.a.problem.in.Canada <- na.omit(new.ces2019_web$Is.income.inequality.a.problem.in.Canada.)
+sum(is.na(new.ces2019_web$Importance.of.Voting))
+new.ces2019_web$Importance.of.Voting[which(is.na(new.ces2019_web$Importance.of.Voting))] <- median(new.ces2019_web$Importance.of.Voting, na.rm = TRUE)
+sum(is.na(new.ces2019_web$Importance.of.Voting))
+
+# Nativism...Immigration - Categorical
+sum(is.na(new.ces2019_web$Nativism...Immigration))
+Nativism...Immigration.mx = table(new.ces2019_web$Nativism...Immigration) 
+Nativism...Immigration.mx 
+names(Nativism...Immigration.mx) ### 
+Nativism...Immigration.mx[Nativism...Immigration.mx==max(Nativism...Immigration.mx)] ### Display the max values which is the mode
+# Check for NAs
+summary(is.na(new.ces2019_web$Nativism...Immigration))
+#replace NAs with Mode
+new.ces2019_web$Nativism...Immigration[is.na(new.ces2019_web$Nativism...Immigration)] <- "Strongly disagree"
+# confirm NAs have been replaces by checking again for NA values
+summary(is.na(new.ces2019_web$Nativism...Immigration))
+
+# Do.you.work.in.the.public..private..or.not.for.profit.sector. - Categorical
+Do.you.work.in.the.public..private..or.not.for.profit.sector..mx = table(new.ces2019_web$Do.you.work.in.the.public..private..or.not.for.profit.sector.) 
+Do.you.work.in.the.public..private..or.not.for.profit.sector..mx 
+names(Do.you.work.in.the.public..private..or.not.for.profit.sector..mx) ### 
+Do.you.work.in.the.public..private..or.not.for.profit.sector..mx[Do.you.work.in.the.public..private..or.not.for.profit.sector..mx==max(Do.you.work.in.the.public..private..or.not.for.profit.sector..mx)] ### Display the max values which is the mode
+# Check for NAs
+summary(is.na(new.ces2019_web$Do.you.work.in.the.public..private..or.not.for.profit.sector.))
+#replace NAs with Mode
+new.ces2019_web$Do.you.work.in.the.public..private..or.not.for.profit.sector.[is.na(new.ces2019_web$Do.you.work.in.the.public..private..or.not.for.profit.sector.)] <- "Private sector"
+# confirm NAs have been replaces by checking again for NA values
+summary(is.na(new.ces2019_web$Do.you.work.in.the.public..private..or.not.for.profit.sector.))
+
+# Trust.in.Others - Categorical
+Trust.in.Others.mx = table(new.ces2019_web$Trust.in.Others) 
+Trust.in.Others.mx 
+Trust.in.Others.mx[Trust.in.Others.mx==max(Trust.in.Others.mx)] ### Display the max values which is the mode
+# Check for NAs
+summary(is.na(new.ces2019_web$Trust.in.Others))
+#replace NAs with Mode
+new.ces2019_web$Trust.in.Others[is.na(new.ces2019_web$Trust.in.Others)] <- "You need to be very careful when dealing with people"
+# confirm NAs have been replaces by checking again for NA values
+summary(is.na(new.ces2019_web$Trust.in.Others))
+fct_count(new.ces2019_web$Trust.in.Others)
+# Newer.lifestyles - Categorical
+Newer.lifestyles.mx = table(new.ces2019_web$Newer.lifestyles) 
+Newer.lifestyles.mx 
+Newer.lifestyles.mx[Newer.lifestyles.mx==max(Newer.lifestyles.mx)] ### Display the max values which is the mode
+# Check for NAs
+summary(is.na(new.ces2019_web$Newer.lifestyles))
+#replace NAs with Mode
+new.ces2019_web$Newer.lifestyles[is.na(new.ces2019_web$Newer.lifestyles)] <- "Somewhat agree"
+# confirm NAs have been replaces by checking again for NA values
+summary(is.na(new.ces2019_web$Newer.lifestyles))
+
+#Does not own stocks or bonds... is a logical verctor that you've turned into a factor. 
+# You also need to create a new level to store the NAs you're changing, using fct_explicit_na 
+new.ces2019_web$Does.not.own.property..stocks..or.bonds <- factor(new.ces2019_web$Does.not.own.property..stocks..or.bonds)
+# Check for NAs
+summary(is.na(new.ces2019_web$Does.not.own.property..stocks..or.bonds))
+#replace NAs with another level
+new.ces2019_web$Does.not.own.property..stocks..or.bonds <- fct_explicit_na(new.ces2019_web$Does.not.own.property..stocks..or.bonds, na_level = "Owns one of more of these")
+# confirm NAs have been replaces by checking again for NA values
+summary(is.na(new.ces2019_web$Does.not.own.property..stocks..or.bonds))
+fct_count(new.ces2019_web$Does.not.own.property..stocks..or.bonds)
+
+# You definitely need to add the other responses to this question that you included in your new table. YES!!! You should be excited about this progress
+# If you keep up the pace of your work then you may get all your cleaning done by tonight!!
+
+# Owns stocks or bonds...
+new.ces2019_web$Owns.a.Residence <- factor(new.ces2019_web$Owns.a.Residence)
+# Check for NAs
+summary(is.na(new.ces2019_web$Owns.a.Residence))
+#replace NAs with another level
+new.ces2019_web$new.ces2019_web$Owns.a.Residence <- fct_explicit_na(new.ces2019_web$Does.not.own.property..stocks..or.bonds, na_level = "Owns one of more of these")
+# confirm NAs have been replaces by checking again for NA values
+sum(is.na(new.ces2019_web$new.ces2019_web$Owns.a.Residence))
+str(new.ces2019_web$Owns.a.Residence)
+fct_count(new.ces2019_web$Does.not.own.property..stocks..or.bonds)
+
+
+
+# Is.income.inequality.a.problem.in.Canada. - Categorical
+Is.income.inequality.a.problem.in.Canada.mx = table(new.ces2019_web$Is.income.inequality.a.problem.in.Canada) 
+Is.income.inequality.a.problem.in.Canada.mx 
+Is.income.inequality.a.problem.in.Canada.mx[Is.income.inequality.a.problem.in.Canada.mx==max(Is.income.inequality.a.problem.in.Canada.mx)] ### Display the max values which is the mode
+# Check for NAs
+summary(is.na(new.ces2019_web$Is.income.inequality.a.problem.in.Canada))
+#replace NAs with Mode
+new.ces2019_web$Is.income.inequality.a.problem.in.Canada[is.na(new.ces2019_web$Is.income.inequality.a.problem.in.Canada)] <- "Probably yes"
+# confirm NAs have been replaces by checking again for NA values
+summary(is.na(new.ces2019_web$Is.income.inequality.a.problem.in.Canada))
+
 # Left.Right.Belief.Scale..Self - numeric
-Cleaned.Left.Right.Belief.Scale..Self <- na.omit(new.ces2019_web$Left.Right.Belief.Scale..Self)
+sum(is.na(new.ces2019_web$Left.Right.Belief.Scale..Self))
+new.ces2019_web$Left.Right.Belief.Scale..Self[which(is.na(new.ces2019_web$Left.Right.Belief.Scale..Self))] <- median(new.ces2019_web$Left.Right.Belief.Scale..Self, na.rm = TRUE)
+sum(is.na(new.ces2019_web$Left.Right.Belief.Scale..Self))
+# Let's now check the whole data.frame for NAs
+sum(is.na(new.ces2019_web$Left.Right.Belief.Scale..Self))
+summary(new.ces2019_web$Left.Right.Belief.Scale..Self)
+# Now, let's confirm there are no more NAs in your data.frame
+summary(is.na(new.ces2019_web))
+#v 56222... how is this possible?
+# You need to remove htis variable Is.income.inequality.a.problem.in.Canada.
+# You need to clean this variable, that for some reason doesn't want to be clean even though it has been cleaned...
+names(new.ces2019_web)
+new.ces2019_web <- new.ces2019_web[,-29]
 
-# Create your new data.frame with these cleaned variables
-Cleaned.new.ces2019_Web <- data.frame(Cleaned.Vote.Choice, Cleaned.Education, Cleaned.Is.income.inequality.a.problem.in.Canada,
-                                      Cleaned.Nativism...Immigration, Cleaned.Newer.lifestyles, Cleaned.Place.of.Residence,
-                                      Cleaned.Religion, Cleaned.Left.Right.Belief.Scale..Self, Cleaned.Trust.in.Others,
-                                      Cleaned.Importance.of.Voting, Cleaned.Times.Volunteering.for.a.Group.or.Organization,
-                                      Cleaned.Politicians.in.General.1, Cleaned.Feminists, Cleaned.Muslims.living.in.Canada,
-                                      Cleaned.Gays.and.Lesbians, Cleaned.Aboriginal.Peoples, Cleaned.Racial.Minorities,
-                                      Cleaned.Women.s.Place.in.the.Home, Cleaned.Family.Values, Cleaned.Religion.s.Importance,
-                                      Cleaned.Does.Not.Own.Property.Stocks.Bonds.Savings, Cleaned.Owns.Savings, Cleaned.Owns.stock.or.bonds,
-                                      Cleaned.Owns.a.business..a.piece.of.property..a.farm.or.livestock, Cleaned.Owns.a.Residence, Cleaned.Age,
-                                      Cleaned.Employment)
-##### Problem #####
-# The problem at this point is figuring out what to do with the NA vaues you wish to test.
-# There are several thousand, sometimes tens of thousands, of NA values being observed in the variables you wish to use in your dataset
-# You have tried to remove them all from a new dataset, and that removed an unfortunate amount of rows from your total dataset.
-# You then decided to remove NA values from variables on an individual basis, in order to preserve the data as much as possible, 
-# but you have received the following error from trying to create the current data.frame;
 
-# Error in data.frame(Cleaned.Vote.Choice, Cleaned.Education, Cleaned.Is.income.inequality.a.problem.in.Canada,  : 
-#                     arguments imply differing number of rows: 31564, 37822, 10340, 4369, 9790, 9319, 31639, 9115, 9082, 9212, 31088, 27988, 0, 10617, 3370, 24799
 
 
 ##### What are your options in this case? Should you just be trying to remove NA values, or inputing them? #####
-
-
+##### November 14th, 2020:
+##### You need to be inputing or replacing NA values!! You have talked to Riyad, and this is 
+##### the best mode of action. Numeric columns with NA values will be replaced with the median, 
+##### and factor columns need to be replaced with the mode 
 # Step 5: Recoding variables of interest for logit regression
 # 5.1 We want to make sure our dependent variable, Vote Choice, is binomial. That is, we wish to recode
 # the variable to "Voted Conservative", and "Did Not Vote Conservative". 
 # We need to collapse the levels in this factoral variable using fct_collapse(). In this way, you are trying to break down
 # the levels of the Independent variables you wish to use in your model into individual levels, 
 
-# Vote Choice - Dependent Variable 
-Cleaned.new.ces2019_Web$Vote.Choice <- fct_collapse(Cleaned.Vote.Choice,
+# Vote Choice - Dependent Variable, November 16 2020
+new.ces2019_web$Vote.Choice <- fct_collapse(new.ces2019_web$Vote.Choice,
                                       Conservative = c("Conservative Party", "People's Party"),
                                       Did.not.Vote.Conservative  = c("Liberal Party", "ndp", "Bloc Québécois",
                                                           "Green Party", "Another party (please specify)",
                                                           "Don't know/ Prefer not to answer"))
 
-##### Update Nov 10, 2020 #####
-# R considers each level, or category an independent binary variable by the glm(), so all this work is probably unnecessary.
-#Education
-Cleaned.new.ces2019_Web$hs_dropout <- fct_collapse(Cleaned.Education,
-                                    hs_dropout = c("No Schooling", "Some elementary school", "Completed elementary school", "Some secondary/ high school"))
-Cleaned.new.ces2019_Web$Highschool <- fct_collapse(Cleaned.Education,                                   
-                                     High_school = c("Completed secondary/ high school"))
-Cleaned.new.ces2019_Web$Technical_community_college <- fct_collapse(Cleaned.Education,                                    
-                                    Technical_community_college = c("Some technical, community college, CEGEP, College Classique", "Completed technical, community college, CEGEP, College Classique"))
-Cleaned.new.ces2019_Web$University <- fct_collapse(Cleaned.Education,                                   
-                                     University = c("Some university", "Bachelor's degree", "Master's degree"))
-Cleaned.new.ces2019_Web$Professional_degree <- fct_collapse(Cleaned.Education,                                   
-                                     Professional_degree = c("Professional degree or doctorate"))
-
-# Inequality
-Cleaned.new.ces2019_Web$Cleaned.Is.income.inequality.a.problem.in.Canada.1 < - fct_collapse(Cleaned.Is.income.inequality.a.problem.in.Canada, 
-                                                                    Yes = c("Definitely yes", "Probably yes"),
-                                                                    Not_sure = c("Not sure"),
-                                                                    No = c("Probably not", "Definitely not"),
-                                                                    Dont_know_noanswer = c("Don't know/ Prefer not to answer"))
-
-#Nativism
-Cleaned.new.ces2019_Web$Cleaned.Nativism...Immigration.1 <- fct_collapse(Cleaned.Nativism...Immigration, 
-                                                Disagree = c("Strongly disagree", "Somewhat disagree "),
-                                                Not_sure = c("Neither agree nor disagree"),
-                                                Agree = c("Somewhat agree", "Strongly agree"),
-                                                Dontknow_noanswer = c("Don't know/ Prefer not to answer"))
-
-#Newer lifestyles
-Cleaned.new.ces2019_Web$Cleaned.Newer.lifestyles.1 <- fct_collapse(Cleaned.Newer.lifestyles, 
-                                           Disagree = c("Strongly disagree", "Somewhat disagree"),
-                                           Not_sure = c("Neither agree nor disagree", "Don't know/ Prefer not to answer"),
-                                           Agree = c("Somewhat agree", "Strongly agree"))
-
-# Place of Residence. 
-# You will need to condense the levels into three, rural, suburban, and rural.
-# You will then need to create your own variables for these individual levels. 
-Cleaned.new.ces2019_Web$Cleaned.Place.of.Residence.1 <- fct_collapse(Cleaned.Place.of.Residence,
-                                             Rural = c("A rural area or village (less than1000 people)",
-                                                       "A small town (more than 1000 people but less than 15K)"),
-                                                       Suburban = c("A middle-sized town (15K-50K people) not attached to a city",
-                                                      "A suburb of a large town or city"),
-                                             Urban = c("A large town or city (more than 50K people)"),
-                                             Dont_know.Prefer_not_to_answer = c("Don't know / Prefer not to answer"))
-#Religion
-Cleaned.new.ces2019_Web$Cleaned.Religion.1 <- fct_collapse(Cleaned.Religion, 
-                                   None.atheist = c("None/ Don't have one/ Atheist"),
-                                   Agnostic = c("Agnostic"),
-                                   Buddhist.Buddhism = c("Buddhist/ Buddhism"),
-                                   Hindu = c("Hindu"),
-                                   Jewish = c("Jewish/ Judaism/ Jewish Orthodox"),
-                                   Muslim = c("Muslim/ Islam"),
-                                   Sikh = c("Muslim/ Islam"),
-                                   Protestant.Christian = c("Anglican/ Church of England", "Baptist", "Greek Orthodox/ Ukrainian Orthodox/ Russian Orthodox/ Easter",
-                                                            "Jehovah's Witness", "Lutheran", "Mormon/ Church of Jesus Christ of the Latter Day Saints", "Pentecostal/ Fundamentalist/ Born Again/ Evangelical",
-                                                            "Presbyterian", "Protestant", "United Church of Canada", "Christian Reformed", "Salvation Army", "Mennonite"),
-                                   Catholic = c("Catholic/ Roman Catholic/ RC"))
-  
 # Step 6: Research Questions and Performing Logistic Regression
 # 6.1 Question 1: Are rural and/or suburban residents more likely to support conservative parties compared to their urban counterparts? 
 # You would like to be able to break down the results by province. You recall being able to do this
 # 6.2 Question 2: Are rural and/or suburban residents more likely to support conservative parties than their urban counterparts even after taking into account socio-demographic characteristics? 
 # 6.3 Question 3: Are rural and/or suburban residents more likely to support conservative parties relative to their urban counterparts even after taking into account individual level values and beliefs? 
-####### 
-ces2019_web.logit.1 <- glm(Cleaned.Vote.Choice.1 ~ Cleaned.Aboriginal.Peoples + Cleaned.Age + Cleaned.Do.you.work.in.the.public..private..or.not.for.profit.sector. +
-Cleaned.Education.1 + Cleaned.Employment.1 + Cleaned.Family.Values.1calling  + Cleaned.Feminists + Cleaned.Gays.and.Lesbians +
-Cleaned.Immigrants + Cleaned.Muslims.living.in.Canada + Cleaned.Nativism...Immigration + Cleaned.Newer.lifestyles +
-Cleaned.Religion + Cleaned.Times.Volunteering.for.a.Group.or.Organization + Cleaned.Importance.of.Voting +
-Cleaned.Is.income.inequality.a.problem.in.Canada. + Cleaned.Left.Right.Belief.Scale..Self + Cleaned.Nativism...Immigration +
-Cleaned.Owns.a.business..a.piece.of.property..a.farm.or.livestock + Cleaned.Owns.a.Residence + Cleaned.Owns.stock.or.bonds +
-Cleaned.Place.of.Residence + Cleaned.Politicians.in.General + Cleaned.Politicians.in.General.1 + Cleaned.Racial.Minorities +
-Cleaned.Religion.s.Importance + Cleaned.Trust.in.Others + Cleaned.Vote.Choice + Cleaned.Women.s.Place.in.the.Home, data = new.ces2019_web, family = "binomial")
 
-# Step 7: Analyzing the results of the model
-# Step 8: Performing decision tree *check notes from supervisor's meeting for clarification
-# 8.1 the BART model? 
-# Step 9: Analyzing the results of the model
-# Step 10: Compare the results of the logit model to the decision tree model
-# Step 11: Determine and create interesting and marketable visualizations of your results
-# Step 12: Upload project to Github page, distribute to your supervisor
+# GLM() testing model
+names(new.ces2019_web)
+new.ces2019_web <- new.ces2019_web[-33]
+model.A <- glm(Vote.Choice ~., data = new.ces2019_web, family="binomial")
+summary(model.A)
+####### The Caret package will alow us to split our data into a training set, and a test set, to help us evalutae our model.
+install.packages("caret")
+library(caret)
+library(tidyverse)
+#### Now we want to begin by splitting our data into a training and a test set
+#1. Begin with setting your seed
+set.seed(234)
+train.samples <-createDataPartition(new.ces2019_web$Vote.Choice, p= 0.75, list = FALSE)
+
+training.dataset <- new.ces2019_web[train.samples,]
+testing.dataset <- new.ces2019_web[-train.samples,]
+# Split Rule is the ne
+splitrule <- trainControl(method = "repeatedcv", number=10, repeats = 10, classProbs = T, summaryFunction = twoClassSummary)
+# Now we are going to build the model
+gbmModel <- train(Vote.Choice~., data = training.dataset, trControl=splitrule, method="gbm", preProcess("center", "scale"), metric="ROC")
+# error in model = variable lengths differ (founr for 'Education'), whAat does this mean? 
+# Answer: removed new.ces2019_web from Vote.Choice, model was able to run, asked to DL gbm package. Got a different error, 
+# Error: Matrices or data frames are required for preprocessing. I suspect this is because some of the variables are factors. 
+# It is suggested that, to use the preprocess(), you will need to convert the factors to dummy variables, using for example caret/s dummyVars; 
+# I guess you need to have the factor variabels excluded from preprocess... ugh
+# NOPE! You only need to create dummy variables of your factor variables. You can acheive this by using the dummyVars() to create a new table from which you can 
+# THEN perform your model 
+# So in this case we need to create dummy variables for our varaibles that are factors. We do this by creating dummy variables.
+dummy <- dummyVars("~.", data=new.ces2019_web)
+# Now we create a data.frame to house our variables. It won't tranform the ID, but will create binary columns of our factor variables.
+transform <- data.frame(predict(dummy, newdata = new.ces2019_web))
+# Now we need to confirm that all of our variables are binary.
+str(transform)
+# Success! Now I believe we have to run our model through with this new data. So this may require that we develop a training and test set with the newly transformed data.frame.
+set.seed(234)
+transform.train.samples <-createDataPartition(transform$Vote.Choice.Conservative, p= 0.75, list = FALSE)
+
+transform.training.dataset <- transform[transform.train.samples,]
+transform.testing.dataset <- transform[-transform.train.samples,]
+# Split Rule is the ne
+splitrule <- trainControl(method = "repeatedcv", number=10, repeats = 10, classProbs = T, summaryFunction = twoClassSummary)
+# Now we are going to build the model
+gbmModel1 <- train(Vote.Choice.Conservative~., data = transform.training.dataset, trControl=splitrule, method="gbm", preProcess("center", "scale"), metric="ROC")
+# The model is asking us to use a 2 level factor as out outcome column. So then I think we need to convert Vote.Choice.Conservative to a factor
+transform$Vote.Choice.Conservative <- as.numeric(transform$Vote.Choice.Conservative)
+str(transform)
+# Now I get the same error, that matrices or data frames are required for preprocessing... Do I switch my DV back to numeric?
+# It didn't make a difference. What I don't understand is that in my working environment, transform.training.dataset IS listed as a data.frame.
+
