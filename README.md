@@ -1,6 +1,4 @@
-# CIND-820-Capstone-Project
-# CIND810 Capstone Project - Place of Residence and Vote Choice in the 2019 Canadian Federal Election - Final Submission
-# Date: December 5, 2020
+# CIND810 Capstone Project - Place of Residence and Vote Choice in the 2019 Canadian Federal Election - Final Draft, November 29, 2020
 # Student: James R. Howard
 # Supervisor: Bilgehan Erdem
 # Semester: Fall 2020
@@ -166,9 +164,9 @@ fct_count(new.ces2019_web$Do.you.have.any.savings)
 
 # Question 3
 # Family.Values - Categorical
-Family.Values.mx = table(new.ces2019_web$Family.Values) ### Get mtcars$mpg distribution
-Family.Values.mx ### Display religious importance values distribution. Values are the frequencies of original values
-names(Family.Values.mx) ### Display the names, which are the original values of religious importance
+Family.Values.mx = table(new.ces2019_web$Family.Values)
+Family.Values.mx 
+names(Family.Values.mx)  
 Family.Values.mx[Family.Values.mx==max(Family.Values.mx)] ### Display the max values which is the mode
 summary(is.na(new.ces2019_web$Family.Values))
 new.ces2019_web$Family.Values[is.na(new.ces2019_web$Family.Values)] <- "Somewhat agree"
@@ -176,16 +174,16 @@ new.ces2019_web$Family.Values[is.na(new.ces2019_web$Family.Values)] <- "Somewhat
 summary(is.na(new.ces2019_web$Family.Values))
 
 # Women.s.Place.in.the.Home - Categorical
-Women.s.Place.in.the.Home.mx = table(new.ces2019_web$Women.s.Place.in.the.Home) ### Get mtcars$mpg distribution
-Women.s.Place.in.the.Home.mx ### Display religious importance values distribution. Values are the frequencies of original values
-names(Women.s.Place.in.the.Home.mx) ### Display the names, which are the original values of religious importance
+Women.s.Place.in.the.Home.mx = table(new.ces2019_web$Women.s.Place.in.the.Home) 
+Women.s.Place.in.the.Home.mx 
+names(Women.s.Place.in.the.Home.mx) 
 Women.s.Place.in.the.Home.mx[Women.s.Place.in.the.Home.mx==max(Women.s.Place.in.the.Home.mx)] ### Display the max values which is the mode
 summary(is.na(new.ces2019_web$Women.s.Place.in.the.Home))
 new.ces2019_web$Women.s.Place.in.the.Home[is.na(new.ces2019_web$Women.s.Place.in.the.Home)] <- "Strongly disagree"
 # confirm NAs have been replaces by checking again for NA values
 sum(is.na(new.ces2019_web$Women.s.Place.in.the.Home))
 
-# Racial.Minorities - Numeric, not categorical
+# Racial.Minorities - Numeric
 sum(is.na(new.ces2019_web$Racial.Minorities))
 new.ces2019_web$Racial.Minorities[which(is.na(new.ces2019_web$Racial.Minorities))] <- median(new.ces2019_web$Racial.Minorities, na.rm = TRUE)
 sum(is.na(new.ces2019_web$Racial.Minorities))
@@ -353,17 +351,10 @@ set.seed(123)
 Q.1.train.control <- trainControl(method = "repeatedcv", number=10, repeats = 3)
 
 Q.1 <- train(Vote.Choice~Place.of.Residence, data = new.ces2019_web, method="glm",family="binomial", trControl=Q.1.train.control)
-summary(Q.1)
-print(Q.1)
 # Now we want to make predictions using our trained model.
 pred <- predict(Q.1, newdata=testing.dataQ)
 # Using the prediction made with our model, we evaluate the accuracy of our prediction using a Confusion Matrix.
 confusionMatrix(data=pred, testing.dataQ$Vote.Choice, positive = "Conservative")
-# Results of the model.
-# What we see is a model dominated by the "Did not Vote Conservative" class, with Sensitivity = 1, and Specificity = 0. 
-# The model does a great job in being able to correctly predicting "Did not Vote Conservative", but not "Conservative" vote choice.
-# The overall impact means the accuracy of this model is only 0.7537. It was okay, but it wasn't really that great. 
-# The accuracy of this model is misleading because of this large fluctuation between sensitivity and specificity.
 
 # 6.2 Question 2: Are rural and/or suburban residents more likely to support conservative parties than their urban counterparts even after taking into account socio-demographic characteristics? 
 set.seed(123)
@@ -376,7 +367,6 @@ Q.2 <- train(Vote.Choice ~ Education + Employment+ Place.of.Residence+ Owns.a.Re
 pred2 <- predict(Q.2, newdata=testing.dataQ)
 # Using the prediction made with our model, we evaluate the accuracy of our prediction using a Confusion Matrix.
 confusionMatrix(data=pred2, testing.dataQ$Vote.Choice, positive = "Conservative")
-#Results from Confusion Matrix
 # The results again show that the model can't correctly predict "Conservative" vote choice. 
 
 # 6.3 Question 3: Are rural and/or suburban residents more likely to support conservative parties relative to their urban counterparts even after taking into account individual level values and beliefs? 
@@ -386,10 +376,10 @@ pred3 <- predict(Q.3, newdata=testing.dataQ)
 # Using the prediction made with our model, we evaluate the accuracy of our prediction using a Confusion Matrix.
 confusionMatrix(data=pred3, testing.dataQ$Vote.Choice, positive = "Conservative")
 
-# Step 8: Performing decision tree 
+# Step 7: Performing decision tree 
 library(rpart)
 library(MLmetrics)
-#Question 1
+# Step 7.1: Question 1: Decision Tree
 set.seed(123)
 Control=trainControl(method= "repeatedcv",number=10,repeats=10,classProbs=TRUE,summaryFunction =multiClassSummary)
 dt_model <- caret :: train(Vote.Choice ~ Place.of.Residence, data = testing.dataQ, method = "rpart", trControl = Control, tuneLength=10)
@@ -397,11 +387,10 @@ summary(dt_model)
 # Using the prediction made with our model, we evaluate the accuracy of our prediction using a Confusion Matrix.
 predict_dt <- predict(dt_model, testing.dataQ)
 confusionMatrix(data=predict_dt, testing.dataQ$Vote.Choice, positive = "Conservative")
-# Results of confusion matrix
 # The model results were the same, no significant difference in it's ability to predict "Conservative" Vote Choice. 
 # Accuracy, Sensitivity and Specificity were also no different.
 
-#Question 2
+# Step 7.2 Question 2: Decision Tree
 set.seed(123)
 Control=trainControl(method= "repeatedcv",number=10,repeats=10,classProbs=TRUE,summaryFunction =multiClassSummary)
 dt_model2 <- caret :: train(Vote.Choice ~ Education + Employment+ Place.of.Residence+ Owns.a.Residence+ Owns.stock.or.bonds+ 
@@ -412,11 +401,10 @@ dt_model2 <- caret :: train(Vote.Choice ~ Education + Employment+ Place.of.Resid
 # Using the prediction made with our model, we evaluate the accuracy of our prediction using a Confusion Matrix.
 predict_dt2 <- predict(dt_model2, testing.dataQ)
 confusionMatrix(data=predict_dt2, testing.dataQ$Vote.Choice, positive = "Conservative")
-# Results of confusion matrix
 # The model results were the same, no significant difference in it's ability to predict "Conservative" Vote Choice. 
 # Accuracy, Sensitivity and Specificity were also no different.
 
-#Question 3 
+# Step 7.3: Question 3: Decision Tree
 set.seed(123)
 Control=trainControl(method= "repeatedcv",number=10,repeats=10,classProbs=TRUE,summaryFunction =multiClassSummary)
 dt_model3 <- caret :: train(Vote.Choice ~ ., data = testing.dataQ, method = "rpart", trControl = Control, tuneLength=10)
@@ -424,20 +412,20 @@ summary(dt_model3)
 # Using the prediction made with our model, we evaluate the accuracy of our prediction using a Confusion Matrix.
 predict_dt3 <- predict(dt_model3, testing.dataQ)
 confusionMatrix(data=predict_dt3, testing.dataQ$Vote.Choice, positive = "Conservative")
-# Results of confusion matrix
-# Wow! there is a difference here as compared to our last model.
 
-# Step 9: Analyzing the results of the model
-# Step 9.1 Logistic Regression
+# Step 9: Review Results
 # Step 9.1.1 Question 1
 summary(Q.1)
 print(Q.1)
+
 # Step 9.1.2 Question 2
 summary(Q.2)
 print(Q.2)
+
 # Step 9.1.3 Question 3 
 summary(Q.3)
 print(Q.3)
+
 # Step 10: Compare the results of the logit model to the decision tree model
 # Step 10.1.1: Question 1 
 print(dt_model)
@@ -449,8 +437,6 @@ print(dt_model2)
 print(dt_model3)
 
 # Step 11: Determine and create interesting and marketable visualizations of your results
-# In caret, featurePlot() can make scatterplots as well as overlayed density plots. Can it work for plotting logistic regression though?
-
 # the package coefplot will be able to plot to coefficients of our models  
 install.packages("coefplot")
 library(coefplot)
