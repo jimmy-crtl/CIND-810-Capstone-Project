@@ -1,4 +1,4 @@
-# CIND810 Capstone Project - Place of Residence and Vote Choice in the 2019 Canadian Federal Election - December 4, 2020
+# CIND820 Capstone Project - Place of Residence and Vote Choice in the 2019 Canadian Federal Election - December 4, 2020
 # Student: James R. Howard
 # Supervisor: Bilgehan Erdem
 # Semester: Fall 2020
